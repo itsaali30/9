@@ -13,7 +13,7 @@
   <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
   <script>
     async function connectSocket() {
-      const response = await fetch('/ngrok-url');
+      const response = await fetch('http://localhost:3000/ngrok-url');
       const data = await response.json();
       const socket = io(data.url);
 
