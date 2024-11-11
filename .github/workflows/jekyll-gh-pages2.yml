@@ -1,12 +1,12 @@
-name: Deploy to GitHub Pages
+name: Run Server with Ngrok
 
 on:
   push:
     branches:
-      - main  # Adjust this if you use a different branch for deployment
+      - main
 
 jobs:
-  build:
+  start-ngrok:
     runs-on: ubuntu-latest
 
     steps:
@@ -21,26 +21,23 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build the project
+      - name: Start Server and Ngrok
+        env:
+          NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
         run: |
-          # Here you would run any build scripts if needed
-          # Example: npm run build
-
-      - name: Deploy to GitHub Pages
-        if: success()
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./ # Root directory containing index.html
-
-  ngrok:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v3
-
-      - name: Set up Ngrok
-        run: |
+          # Install Ngrok globally
           npm install -g @ngrok/ngrok
-          ngrok authtoken ${{ secrets.NGROK_AUTH_TOKEN }} # Add your Ngrok auth token in GitHub Secrets
-          ngrok http 3000
+
+          # Authenticate Ngrok
+          ngrok authtoken $NGROK_AUTH_TOKEN
+
+          # Start the server with `npm start` and run Ngrok
+          npm start &             # Start your server in the background
+          ngrok http 3000 > ngrok_url.txt & # Start Ngrok on port 3000
+
+          # Wait for Ngrok to initialize and extract the public URL
+          sleep 5
+          NGROK_URL=$(grep -o "https://[a-z0-9]*\.ngrok\.io" ngrok_url.txt)
+          echo "Ngrok public URL: $NGROK_URL"
+
+          # Optionally, use this URL in other steps, notifications, etc.
